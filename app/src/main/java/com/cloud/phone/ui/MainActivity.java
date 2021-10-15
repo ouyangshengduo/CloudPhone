@@ -2,11 +2,15 @@ package com.cloud.phone.ui;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -21,6 +25,7 @@ import com.cloud.phone.model.Message;
 import com.cloud.phone.model.Room;
 import com.cloud.phone.model.RoomType;
 import com.cloud.phone.util.LogUtil;
+import com.cloud.phone.util.PreferenceUtil;
 import com.cloud.phone.webrtc.WebRtcInterface;
 import com.cloud.phone.webrtc.WebRtcManager;
 
@@ -40,6 +45,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button shareScreen;
     private int defaultCheck = 1000;
     private int PROJECTION_REQUEST_CODE = 100;
+    private EditText etWidth;
+    private EditText etHeight;
+    private EditText etFps;
+    private EditText etWebsocketAddress;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +61,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void init(){
         shareScreen = findViewById(R.id.share_screen);
+        etWebsocketAddress = findViewById(R.id.et_websocket_address);
+        etWidth = findViewById(R.id.et_width);
+        etHeight = findViewById(R.id.et_height);
+        etFps = findViewById(R.id.et_fps);
         shareScreen.setOnClickListener(this);
+
+        String webSocketAddress = PreferenceUtil.getInstance().getString("webSocketAddress","");
+        String widthStr = PreferenceUtil.getInstance().getString("width","");
+        String heightStr = PreferenceUtil.getInstance().getString("height","");
+        String fpsStr = PreferenceUtil.getInstance().getString("fps","");
+
+        etWebsocketAddress.setText(webSocketAddress);
+        etWidth.setText(widthStr);
+        etHeight.setText(heightStr);
+        etFps.setText(fpsStr);
+
 
     }
 
@@ -135,9 +160,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void permissionCheckForProjection(){
+        saveData();
         MediaProjectionManager projectionManager = (MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE);
         Intent intent = projectionManager.createScreenCaptureIntent();
         startActivityForResult(intent,PROJECTION_REQUEST_CODE);
+    }
+
+    private void saveData() {
+        PreferenceUtil.getInstance().setString("webSocketAddress",etWebsocketAddress.getText().toString().trim());
+        PreferenceUtil.getInstance().setString("width",etWidth.getText().toString().trim());
+        PreferenceUtil.getInstance().setString("height",etHeight.getText().toString().trim());
+        PreferenceUtil.getInstance().setString("fps",etFps.getText().toString().trim());
     }
 
     @Override
@@ -202,4 +235,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         WebRtcInterface webRtcInterface = WebRtcManager.getInstance(this,null);
         webRtcInterface.chatRequest(RoomType.getRooType(roomTypeCode),"123456");
     }
+
+
 }

@@ -5,6 +5,95 @@
     android:orientation="vertical"
     android:gravity="center">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="50dp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:text="WebSocket地址"
+            android:gravity="left|center_vertical"
+            />
+        <EditText
+            android:id="@+id/et_websocket_address"
+            android:layout_width="0dp"
+            android:layout_weight="3"
+            android:layout_height="50dp"
+            android:hint="websocket自定义配置" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="50dp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:gravity="left|center_vertical"
+            android:text="Width"
+
+            />
+        <EditText
+            android:id="@+id/et_width"
+            android:layout_width="0dp"
+            android:layout_weight="3"
+            android:layout_height="50dp"
+            android:inputType="number"
+            android:gravity="left|center_vertical"
+            android:hint="720" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="50dp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:gravity="left|center_vertical"
+            android:text="Height"
+            />
+        <EditText
+            android:id="@+id/et_height"
+            android:layout_width="0dp"
+            android:layout_weight="3"
+            android:inputType="number"
+            android:layout_height="50dp"
+            android:gravity="left|center_vertical"
+            android:hint="1280" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="50dp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:gravity="left|center_vertical"
+            android:text="帧率"
+            />
+        <EditText
+            android:id="@+id/et_fps"
+            android:layout_width="0dp"
+            android:layout_weight="3"
+            android:inputType="number"
+            android:layout_height="50dp"
+            android:gravity="left|center_vertical"
+            android:hint="30" />
+    </LinearLayout>
+
     <Button
         android:id="@+id/share_screen"
         android:layout_width="match_parent"

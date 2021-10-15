@@ -19,11 +19,12 @@ public class WebRtcConfig {
     //socket
     public static final String USER_ID = "0";                    //userId设置为"0",默认小于6位长度由服务器自动产生
     public static final int DEVICE = DeviceType.PHONE.getCode(); //设备类型为手机
-    public static final String SOCKET_URI = "wss://1.14.19.123:8443/groupcall";
+    //public static final String SOCKET_URI = "wss://1.14.19.123:8443/groupcall";
+    public static final String SOCKET_URI = "wss://xiruiros.f3322.net:18443/groupcall";
     //摄像头配置
-    public static final int CAPTURE_WIDTH = 320;  //宽
-    public static final int CAPTURE_HEIGHT = 240; //高
-    public static final int CAPTURE_FPS = 10;     //帧率
+    public final int CAPTURE_WIDTH = 320;  //宽
+    public final int CAPTURE_HEIGHT = 240; //高
+    public static final int CAPTURE_FPS = 30;     //帧率
     //是否开启Candidate延迟队列
     public static final boolean enableDelayQueue = false;
     //log-TAG

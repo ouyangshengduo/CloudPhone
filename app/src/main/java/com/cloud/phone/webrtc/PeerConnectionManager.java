@@ -4,11 +4,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.projection.MediaProjection;
+import android.util.DisplayMetrics;
+import android.view.WindowManager;
 
 import com.cloud.phone.model.RoomType;
 import com.cloud.phone.model.SignalingMessage;
 import com.cloud.phone.model.User;
 import com.cloud.phone.util.LogUtil;
+import com.cloud.phone.util.PreferenceUtil;
 
 import org.webrtc.AudioSource;
 import org.webrtc.AudioTrack;
@@ -19,6 +22,8 @@ import org.webrtc.CameraVideoCapturer;
 import org.webrtc.DataChannel;
 import org.webrtc.DefaultVideoDecoderFactory;
 import org.webrtc.DefaultVideoEncoderFactory;
+import org.webrtc.HardwareVideoDecoderFactory;
+import org.webrtc.HardwareVideoEncoderFactory;
 import org.webrtc.IceCandidate;
 import org.webrtc.MediaConstraints;
 import org.webrtc.MediaStream;
@@ -29,6 +34,7 @@ import org.webrtc.ScreenCapturerAndroid;
 import org.webrtc.SdpObserver;
 import org.webrtc.SessionDescription;
 import org.webrtc.SurfaceTextureHelper;
+import org.webrtc.SurfaceViewRenderer;
 import org.webrtc.VideoCapturer;
 import org.webrtc.VideoDecoderFactory;
 import org.webrtc.VideoEncoderFactory;
@@ -73,6 +79,9 @@ public class PeerConnectionManager implements ConnectionInterface{
     private static final String AUDIO_NOISE_SUPPRESSION_CONSTRAINT = "googNoiseSuppression";//噪声抑制
     private static final String AUDIO_AUTO_GAIN_CONTROL_CONSTRAINT = "googAutoGainControl"; //自动增益
     private static final String AUDIO_HIGH_PASS_FILTER_CONSTRAINT = "googHighpassFilter";   //高通滤波
+    private static int width = 720;
+    private static int height = 1280;
+    private static int fps = 30;
 
     private static final String LOCAL_STREAM_ID = "ARDAMS";                      //本地流ID
     private static final String AUDIO_TRACK_ID = "ARDAMS-AUDIO";                 //音频轨ID
@@ -106,6 +115,20 @@ public class PeerConnectionManager implements ConnectionInterface{
         iceServers.add(stun);
         iceServers.add(turn);
 
+        String widthStr = PreferenceUtil.getInstance().getString("width","");
+        String heightStr = PreferenceUtil.getInstance().getString("height","");
+        String fpsStr = PreferenceUtil.getInstance().getString("fps","");
+
+        LogUtil.d(" widthStr = " + widthStr + " heightStr = " + heightStr + " fpsStr = " + fpsStr);
+
+        if(!widthStr.isEmpty() && !heightStr.isEmpty()){
+            width = Integer.valueOf(widthStr);
+            height = Integer.valueOf(heightStr);
+        }
+
+        if(!fpsStr.isEmpty()){
+            fps = Integer.valueOf(fpsStr);
+        }
     }
 
     public static PeerConnectionManager getInstance(RoomType roomType){
@@ -331,6 +354,8 @@ public class PeerConnectionManager implements ConnectionInterface{
 
     }
 
+
+
     //获取连接数，这里应该处理线程同步问题
     public int getConnectNum(){
         return peerConnectionMap.size();
@@ -343,6 +368,8 @@ public class PeerConnectionManager implements ConnectionInterface{
         VideoDecoderFactory videoDecoderFactory = null;
         if (roomType != RoomType.SINGLE_AUDIO){
             //创建视频编码器工厂并开启v8和h264编码，webrtc会自动选择最优的，当然也可以只开启其中一个
+//            videoEncoderFactory = new HardwareVideoEncoderFactory(manager.getEglBase().getEglBaseContext(),false,false);
+//            videoDecoderFactory = new HardwareVideoDecoderFactory(manager.getEglBase().getEglBaseContext());
             videoEncoderFactory = new DefaultVideoEncoderFactory(manager.getEglBase().getEglBaseContext(),true,true);
             //创建视频解密器工厂
             videoDecoderFactory = new DefaultVideoDecoderFactory(manager.getEglBase().getEglBaseContext());
@@ -362,7 +389,7 @@ public class PeerConnectionManager implements ConnectionInterface{
     private void createLocalStream(){
         //调用工厂方法创建流，其中label标签必须以ARDAMS开头，可以有后缀
         //localStream是音视频的承载，后面需要将音视频轨设置到其中
-        localStream = peerConnectionFactory.createLocalMediaStream(LOCAL_STREAM_ID);
+        localStream = peerConnectionFactory.createLocalMediaStream("102");
 
         //音频
         audioSource = peerConnectionFactory.createAudioSource(createMediaConstraints());    //创建音频源,并设置约束属性
@@ -373,18 +400,22 @@ public class PeerConnectionManager implements ConnectionInterface{
         if (roomType == RoomType.SINGLE_AUDIO)return;
         //videoCapturer = createCameraCapturer();                                              //创建videoCapturer
         videoCapturer = createScreenCapture();
-        videoSource = peerConnectionFactory.createVideoSource(videoCapturer.isScreencast());//创建视频源
+
 
         //进行摄像头预览的设置，因为聊天室也需要显示自己的图像，这是借助了SurfaceTextureHelper通过openGL进行渲染，聊天室内每一个窗口的渲染会单独开一个线程
         surfaceTextureHelper = SurfaceTextureHelper.create(SURFACE_THREAD_NAME,manager.getEglBase().getEglBaseContext());
+        videoSource = peerConnectionFactory.createVideoSource(videoCapturer.isScreencast());//创建视频源
         videoCapturer.initialize(surfaceTextureHelper,manager.getContext(),videoSource.getCapturerObserver());//初始化videoCapturer
-        videoCapturer.startCapture(WebRtcConfig.CAPTURE_WIDTH,WebRtcConfig.CAPTURE_HEIGHT,WebRtcConfig.CAPTURE_FPS);//开始采集 i:宽，i1:高，i2:帧率
+        LogUtil.d("width = " + width + " height = " + height + " fps = " + fps);
+        videoCapturer.startCapture(width,height,fps);//开始采集 i:宽，i1:高，i2:帧率
+        videoTrack = peerConnectionFactory.createVideoTrack("100",videoSource);    //创建视频轨
+        videoTrack.setEnabled(true);
 
-        videoTrack = peerConnectionFactory.createVideoTrack(VIDEO_TRACK_ID,videoSource);    //创建视频轨
         localStream.addTrack(videoTrack);//将视频轨设置到localStream中
 
-        manager.setLocalStream(localStream,selfId);//刷新显示自己的窗口
+        //manager.setLocalStream(localStream,selfId);//刷新显示自己的窗口
     }
+
 
     private Peer currentPeer;
     //创建p2p连接，注意这里的逻辑：
@@ -411,7 +442,7 @@ public class PeerConnectionManager implements ConnectionInterface{
         if (roomType == RoomType.SINGLE_AUDIO){
             mediaConstraints = createMediaConstraintsForOfferAnswer(true,false);
         }else {
-            mediaConstraints = createMediaConstraintsForOfferAnswer(false,true);
+            mediaConstraints = createMediaConstraintsForOfferAnswer(true,true);
         }
         currentPeer.peerConnection.createOffer(currentPeer,mediaConstraints);
     }
@@ -515,7 +546,9 @@ public class PeerConnectionManager implements ConnectionInterface{
             this.socketId = socketId;
             //创建ice服务器信息配置,即stun和turn，从这里我们可以看出，p2p连接的建立先进行了内网穿透
             PeerConnection.RTCConfiguration configuration = new PeerConnection.RTCConfiguration(iceServers);
-            configuration.iceTransportsType = PeerConnection.IceTransportsType.NOHOST;
+            configuration.iceTransportsType = PeerConnection.IceTransportsType.RELAY;
+            configuration.disableIpv6 = true;
+            configuration.tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.DISABLED;
             //通过工厂创建连接,并设置回调
             peerConnection = peerConnectionFactory.createPeerConnection(configuration,this);
             if (WebRtcConfig.enableDelayQueue){
@@ -533,7 +566,6 @@ public class PeerConnectionManager implements ConnectionInterface{
         @Override
         public void onIceConnectionChange(PeerConnection.IceConnectionState iceConnectionState) {
             LogUtil.d("onIceConnectionChange iceConnectionState = " + iceConnectionState);
-
         }
 
         @Override

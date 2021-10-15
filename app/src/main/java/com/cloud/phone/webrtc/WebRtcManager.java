@@ -3,6 +3,8 @@ package com.cloud.phone.webrtc;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
+import android.util.DisplayMetrics;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.cloud.phone.model.Message;
@@ -12,6 +14,7 @@ import com.cloud.phone.model.User;
 import com.cloud.phone.ui.ScreenShareActivity;
 import com.cloud.phone.ui.ViewCallback;
 import com.cloud.phone.util.LogUtil;
+import com.cloud.phone.util.PreferenceUtil;
 import com.cloud.phone.websocket.SocketInterface;
 import com.cloud.phone.websocket.WebSocket;
 
@@ -39,6 +42,7 @@ public class WebRtcManager implements WebRtcInterface,ConnectionInterface, Socke
     private RoomType roomType;                        //房间类型
     public Intent projectionResultData;
     public static final String SELF_NAME = "ouyang";
+    private String webSocketAddress;
 
     private WebRtcManager(ViewCallback viewCallback, EglBase eglBase){
         init(viewCallback,eglBase);
@@ -48,6 +52,9 @@ public class WebRtcManager implements WebRtcInterface,ConnectionInterface, Socke
         this.viewCallback = viewCallback;
         this.context = (Context) viewCallback;
         this.eglBase = eglBase;
+
+        webSocketAddress = PreferenceUtil.getInstance().getString("webSocketAddress","");
+
     }
 
     public static WebRtcManager getInstance(ViewCallback viewCallback,EglBase eglBase){
@@ -88,8 +95,13 @@ public class WebRtcManager implements WebRtcInterface,ConnectionInterface, Socke
             socketInterface = new WebSocket();
             connectionInterface = PeerConnectionManager.getInstance(roomType);
         }
-        String uri = WebRtcConfig.SOCKET_URI ;//+ "/" + WebRtcConfig.USER_ID + "/" + WebRtcConfig.DEVICE;
-        socketInterface.connect(uri);
+        LogUtil.d("webSocketAddress = " + webSocketAddress);
+        if(webSocketAddress != null && !webSocketAddress.isEmpty()) {
+            socketInterface.connect(webSocketAddress);
+        }else{
+            String uri = WebRtcConfig.SOCKET_URI;//+ "/" + WebRtcConfig.USER_ID + "/" + WebRtcConfig.DEVICE;
+            socketInterface.connect(uri);
+        }
     }
 
     /**==================================WebRtcInterface===========================*/
@@ -138,15 +150,12 @@ public class WebRtcManager implements WebRtcInterface,ConnectionInterface, Socke
     @Override
     public void joinRoom() {
 
-        PeerConnectionManager peerConnectionManager = (PeerConnectionManager)connectionInterface;
-        peerConnectionManager.selfId = SELF_NAME;
-
         SignalingMessage message = new SignalingMessage();
         message.id = "joinRoom";
         message.name = SELF_NAME;
         message.room = roomId;
         message.url = "webcam";
-        message.mode = "video-only";
+        message.mode = "video-and-audio";
         message.isLoop = true;
         socketInterface.joinRoom(message);
     }

@@ -5,7 +5,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
@@ -32,15 +34,15 @@ public class ScreenShareActivity extends AppCompatActivity implements WebRtcInte
     private FrameLayout videoFrameLayout;
     private WebRtcInterface manager;
     private EglBase eglBase;
-    private Map<String, SurfaceViewRenderer> videoViews = new HashMap<>();//保存用户信息
-    private Map<String,ProxyVideoSink> videoSinkMap = new HashMap<>();
-    private List<String> personIds = new ArrayList<>();                   //保存用户id
+    private SurfaceViewRenderer surfaceViewRenderer;
+    private ProxyVideoSink videoSink;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_screen_share);
         LogUtil.d("ScreenShareActivity start " + System.currentTimeMillis());
+
         videoFrameLayout = findViewById(R.id.video_frame_layout);
         eglBase = EglBase.create();
         manager = WebRtcManager.getInstance(this,eglBase);
@@ -169,18 +171,13 @@ public class ScreenShareActivity extends AppCompatActivity implements WebRtcInte
      * @param socketId
      */
     private void removeView(String socketId){
-        SurfaceViewRenderer renderer = videoViews.get(socketId);
-        ProxyVideoSink videoSink = videoSinkMap.get(socketId);
-        if (renderer != null){
-            renderer.release();
+        if (surfaceViewRenderer != null){
+            surfaceViewRenderer.release();
         }
         if (videoSink != null){
             videoSink.setTarget(null);
         }
-        videoViews.remove(socketId);
-        videoSinkMap.remove(socketId);
-        personIds.remove(socketId);
-        videoFrameLayout.removeView(renderer);
+        videoFrameLayout.removeView(surfaceViewRenderer);
         rePlaceView();
     }
 
@@ -193,12 +190,12 @@ public class ScreenShareActivity extends AppCompatActivity implements WebRtcInte
     public void addView(MediaStream stream,String userId){
 
         //创建surfaceView并初始化
-        SurfaceViewRenderer surfaceViewRenderer = new SurfaceViewRenderer(this);//采用webrtc中的surfaceView
+        surfaceViewRenderer = new SurfaceViewRenderer(this);//采用webrtc中的surfaceView
         surfaceViewRenderer.init(eglBase.getEglBaseContext(),null);       //初始化surfaceView
         //surfaceViewRenderer.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT); //设置缩放模式 SCALE_ASPECT_FIT:按照view宽高设置，SCALE_ASPECT_FILL：按照摄像头预览画面设置
         surfaceViewRenderer.setMirror(true);                                             //镜像翻转
 
-        ProxyVideoSink videoSink = new ProxyVideoSink();
+        videoSink = new ProxyVideoSink();
         videoSink.setTarget(surfaceViewRenderer);
 
         //将摄像头数据渲染到surfaceView
@@ -210,42 +207,27 @@ public class ScreenShareActivity extends AppCompatActivity implements WebRtcInte
         videoFrameLayout.addView(surfaceViewRenderer);
 
         //保存数据
-        videoViews.put(userId,surfaceViewRenderer);
-        videoSinkMap.put(userId,videoSink);
-        personIds.add(userId);
 
         rePlaceView();
     }
 
     //重新计算宽高，设置摆放位置
     private void rePlaceView(){
-        int size = videoViews.size();
-        for (int i=0; i<size; i++){
-            String id = personIds.get(i);
-            SurfaceViewRenderer renderer = videoViews.get(id);
-            if (renderer != null){
-                FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-                layoutParams.width = PositionUtil.getWith(this,size);
-                layoutParams.height = PositionUtil.getWith(this,size);
-                layoutParams.leftMargin = PositionUtil.getX(this,size,i);
-                layoutParams.topMargin = PositionUtil.getY(this,size,i);
-                renderer.setLayoutParams(layoutParams);
-            }
+        if (surfaceViewRenderer != null){
+            FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+            layoutParams.width = PositionUtil.getWith(this,1);
+            layoutParams.height = PositionUtil.getWith(this,1);
+            layoutParams.leftMargin = PositionUtil.getX(this,1,0);
+            layoutParams.topMargin = PositionUtil.getY(this,1,0);
+            surfaceViewRenderer.setLayoutParams(layoutParams);
         }
     }
 
     //退出房间
     private void exitRoom(){
         manager.hangUp();
-        for (SurfaceViewRenderer renderer:videoViews.values()){
-            renderer.release();
-        }
-        for (ProxyVideoSink sink:videoSinkMap.values()){
-            sink.setTarget(null);
-        }
-        videoViews.clear();
-        videoSinkMap.clear();
-        personIds.clear();
+        surfaceViewRenderer.release();
+        videoSink.setTarget(null);
         eglBase = null;
     }
 
@@ -258,5 +240,8 @@ public class ScreenShareActivity extends AppCompatActivity implements WebRtcInte
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        exitRoom();
     }
+
+
 }
