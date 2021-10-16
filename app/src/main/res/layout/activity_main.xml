@@ -100,4 +100,16 @@
         android:layout_height="wrap_content"
         android:text="开启分享桌面"/>
 
+    <Button
+        android:id="@+id/share_camera1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="开启分享前置摄像头"/>
+
+    <Button
+        android:id="@+id/share_camera2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="开启分享后置摄像头"/>
+
 </LinearLayout>

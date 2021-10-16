@@ -2,11 +2,16 @@ package com.cloud.phone.webrtc;
 
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioFormat;
 import android.media.AudioManager;
+import android.media.AudioRecord;
+import android.media.MediaFormat;
+import android.media.MediaRecorder;
 import android.media.projection.MediaProjection;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
 
+import com.cloud.phone.CloudPhoneApplication;
 import com.cloud.phone.model.RoomType;
 import com.cloud.phone.model.SignalingMessage;
 import com.cloud.phone.model.User;
@@ -269,6 +274,7 @@ public class PeerConnectionManager implements ConnectionInterface{
         if (audioManager == null){
             audioManager = (AudioManager) manager.getContext().getSystemService(Context.AUDIO_SERVICE);
         }
+        audioManager.setMode(AudioManager.MODE_NORMAL);
         audioManager.setSpeakerphoneOn(handsfree);
     }
 
@@ -285,9 +291,13 @@ public class PeerConnectionManager implements ConnectionInterface{
             @Override
             public void run() {
                 LogUtil.i("hangUp...");
-                ArrayList<String> ids = (ArrayList<String>)socketIds.clone();
-                for (String id:ids){
-                    closePeerConnection(id);
+
+                //关闭socket
+                manager.close();
+
+                if(currentPeer != null){
+                    currentPeer.quitQueue();
+                    currentPeer.peerConnection.close();
                 }
                 //关闭音频
                 if (audioSource != null){
@@ -326,8 +336,7 @@ public class PeerConnectionManager implements ConnectionInterface{
                 }
                 localStream = null;
                 audioManager = null;
-                //关闭socket
-                manager.close();
+
             }
         });
     }
@@ -379,7 +388,7 @@ public class PeerConnectionManager implements ConnectionInterface{
         PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions.builder(manager.getContext()).createInitializationOptions());
         return PeerConnectionFactory.builder()
                 .setOptions(options)          //设置网络类型，这是使用options自动判断
-                .setAudioDeviceModule(JavaAudioDeviceModule.builder(manager.getContext()).createAudioDeviceModule()) //设置音频类型
+                .setAudioDeviceModule(JavaAudioDeviceModule.builder(manager.getContext()).setAudioSource(MediaRecorder.AudioSource.MIC).setAudioFormat(AudioFormat.ENCODING_PCM_16BIT).createAudioDeviceModule()) //设置音频类型
                 .setVideoEncoderFactory(videoEncoderFactory)//设置视频编码工厂
                 .setVideoDecoderFactory(videoDecoderFactory)//设置视频解码工厂
                 .createPeerConnectionFactory();
@@ -398,8 +407,16 @@ public class PeerConnectionManager implements ConnectionInterface{
 
         //视频
         if (roomType == RoomType.SINGLE_AUDIO)return;
-        //videoCapturer = createCameraCapturer();                                              //创建videoCapturer
-        videoCapturer = createScreenCapture();
+
+        if(roomType == RoomType.CAMERA1 || roomType == RoomType.CAMERA2){
+            videoCapturer = createCameraCapturer();
+        }else if(roomType == RoomType.SCREEN){
+            videoCapturer = createScreenCapture();
+        }
+        if(videoCapturer == null){
+            LogUtil.e("videoCapturer = null");
+            return;
+        }
 
 
         //进行摄像头预览的设置，因为聊天室也需要显示自己的图像，这是借助了SurfaceTextureHelper通过openGL进行渲染，聊天室内每一个窗口的渲染会单独开一个线程
@@ -409,11 +426,9 @@ public class PeerConnectionManager implements ConnectionInterface{
         LogUtil.d("width = " + width + " height = " + height + " fps = " + fps);
         videoCapturer.startCapture(width,height,fps);//开始采集 i:宽，i1:高，i2:帧率
         videoTrack = peerConnectionFactory.createVideoTrack("100",videoSource);    //创建视频轨
-        videoTrack.setEnabled(true);
 
         localStream.addTrack(videoTrack);//将视频轨设置到localStream中
 
-        //manager.setLocalStream(localStream,selfId);//刷新显示自己的窗口
     }
 
 
@@ -423,7 +438,7 @@ public class PeerConnectionManager implements ConnectionInterface{
     //因为自己需要和每个人都要通信，因此必须和每个人都建立一个P2P连接，
     //通过id循环与房间内的每个人建立P2P连接
     private void createPeerConnections(){
-        currentPeer = new Peer("ouyang");
+        currentPeer = new Peer(WebRtcManager.SELF_NAME + CloudPhoneApplication.getInstance().getShareID());
     }
 
     //将本地流加入peerConnection中
@@ -508,24 +523,28 @@ public class PeerConnectionManager implements ConnectionInterface{
         VideoCapturer capturer = null;
         String[] deviceNames = cameraEnumerator.getDeviceNames();
 
-        for (String name:deviceNames){
-            //默认优先使用前置摄像头
-            if (cameraEnumerator.isFrontFacing(name)){
-                capturer = cameraEnumerator.createCapturer(name,null);
-                if (capturer != null){
-                    return capturer;
+        if(roomType == RoomType.CAMERA1) {
+            for (String name : deviceNames) {
+                //默认优先使用前置摄像头
+                if (cameraEnumerator.isFrontFacing(name)) {
+                    capturer = cameraEnumerator.createCapturer(name, null);
+                    if (capturer != null) {
+                        return capturer;
+                    }
                 }
             }
-        }
-
-        for (String name:deviceNames){
-            //否则使用后置摄像头
-            if (!cameraEnumerator.isFrontFacing(name)){
-                capturer = cameraEnumerator.createCapturer(name,null);
-                if (capturer != null){
-                    return capturer;
+            return null;
+        }else if(roomType == RoomType.CAMERA2){
+            for (String name:deviceNames){
+                //否则使用后置摄像头
+                if (!cameraEnumerator.isFrontFacing(name)){
+                    capturer = cameraEnumerator.createCapturer(name,null);
+                    if (capturer != null){
+                        return capturer;
+                    }
                 }
             }
+            return null;
         }
 
         return null;

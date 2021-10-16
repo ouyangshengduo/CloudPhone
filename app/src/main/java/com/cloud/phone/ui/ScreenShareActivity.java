@@ -9,6 +9,7 @@ import android.util.DisplayMetrics;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.cloud.phone.model.BaseMessage;
@@ -36,6 +37,11 @@ public class ScreenShareActivity extends AppCompatActivity implements WebRtcInte
     private EglBase eglBase;
     private SurfaceViewRenderer surfaceViewRenderer;
     private ProxyVideoSink videoSink;
+    private static final int SCREEN_SHARE = 1;
+    private static final int CAMERA_FRONT = 2;
+    private static final int CAMERA_BACK = 3;
+    private static int type;
+    private TextView shareTypeTv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +50,14 @@ public class ScreenShareActivity extends AppCompatActivity implements WebRtcInte
         LogUtil.d("ScreenShareActivity start " + System.currentTimeMillis());
 
         videoFrameLayout = findViewById(R.id.video_frame_layout);
+        shareTypeTv = findViewById(R.id.share_type);
+        if(type == SCREEN_SHARE){
+            shareTypeTv.setText("屏幕分享中...");
+        }else if(type == CAMERA_FRONT){
+            shareTypeTv.setText("前置摄像头分享中...");
+        }else if(type == CAMERA_BACK){
+            shareTypeTv.setText("后置摄像头分享中...");
+        }
         eglBase = EglBase.create();
         manager = WebRtcManager.getInstance(this,eglBase);
         manager.joinRoom();
@@ -232,7 +246,8 @@ public class ScreenShareActivity extends AppCompatActivity implements WebRtcInte
     }
 
 
-    public static void startSelf(Context context){
+    public static void startSelf(Context context,int inputType){
+        type = inputType;
         Intent intent = new Intent(context,ScreenShareActivity.class);
         context.startActivity(intent);
     }

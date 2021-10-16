@@ -11,6 +11,9 @@ public enum RoomType {
     SINGLE(1,"SINGLE"),                  //一对一音视频聊天
     SINGLE_AUDIO(2,"SINGLE_AUDIO"),      //一对一音频聊天
     LIVE(3,"LIVE"),                      //直播
+    SCREEN(4,"SCREEN"),
+    CAMERA1(5,"Camera1"),
+    CAMERA2(6,"Camera2"),
     DEFAULT(-1,"DEFAULT");               //默认值
 
     private int code;

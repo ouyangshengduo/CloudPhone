@@ -43,6 +43,8 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, ViewCallback {
 
     private Button shareScreen;
+    private Button shareCamera1;
+    private Button shareCamera2;
     private int defaultCheck = 1000;
     private int PROJECTION_REQUEST_CODE = 100;
     private EditText etWidth;
@@ -61,11 +63,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void init(){
         shareScreen = findViewById(R.id.share_screen);
+        shareCamera1  = findViewById(R.id.share_camera1);
+        shareCamera2 = findViewById(R.id.share_camera2);
         etWebsocketAddress = findViewById(R.id.et_websocket_address);
         etWidth = findViewById(R.id.et_width);
         etHeight = findViewById(R.id.et_height);
         etFps = findViewById(R.id.et_fps);
         shareScreen.setOnClickListener(this);
+        shareCamera1.setOnClickListener(this);
+        shareCamera2.setOnClickListener(this);
 
         String webSocketAddress = PreferenceUtil.getInstance().getString("webSocketAddress","");
         String widthStr = PreferenceUtil.getInstance().getString("width","");
@@ -151,7 +157,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         WebRtcManager.getInstance(this,null).projectionResultData = data;
-        sendRequest(RoomType.MEETING.getCode());
+        sendRequest(RoomType.SCREEN.getCode());
     }
 
     //判断是否有权限
@@ -178,6 +184,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (view.getId()){
             case R.id.share_screen:
                 permissionCheckForProjection();
+                break;
+            case R.id.share_camera1:
+                sendRequest(RoomType.CAMERA1.getCode());
+                break;
+            case R.id.share_camera2:
+                sendRequest(RoomType.CAMERA2.getCode());
                 break;
             default:
                 break;
@@ -233,7 +245,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void sendRequest(int roomTypeCode){
         LogUtil.d("send connect request");
         WebRtcInterface webRtcInterface = WebRtcManager.getInstance(this,null);
-        webRtcInterface.chatRequest(RoomType.getRooType(roomTypeCode),"123456");
+        webRtcInterface.chatRequest(RoomType.getRooType(roomTypeCode),"12345678");
     }
 
 

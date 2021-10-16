@@ -7,7 +7,9 @@ import android.util.DisplayMetrics;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import com.cloud.phone.CloudPhoneApplication;
 import com.cloud.phone.model.Message;
+import com.cloud.phone.model.MessageType;
 import com.cloud.phone.model.RoomType;
 import com.cloud.phone.model.SignalingMessage;
 import com.cloud.phone.model.User;
@@ -41,7 +43,7 @@ public class WebRtcManager implements WebRtcInterface,ConnectionInterface, Socke
     private String roomId;                            //房间号
     private RoomType roomType;                        //房间类型
     public Intent projectionResultData;
-    public static final String SELF_NAME = "ouyang";
+    public static final String SELF_NAME = "ouyang-with-camera";
     private String webSocketAddress;
 
     private WebRtcManager(ViewCallback viewCallback, EglBase eglBase){
@@ -91,16 +93,20 @@ public class WebRtcManager implements WebRtcInterface,ConnectionInterface, Socke
 
     //向服务器发起建立WebSocket连接的请求
     private void connect(){
-        if (socketInterface == null){
-            socketInterface = new WebSocket();
-            connectionInterface = PeerConnectionManager.getInstance(roomType);
-        }
-        LogUtil.d("webSocketAddress = " + webSocketAddress);
-        if(webSocketAddress != null && !webSocketAddress.isEmpty()) {
-            socketInterface.connect(webSocketAddress);
-        }else{
-            String uri = WebRtcConfig.SOCKET_URI;//+ "/" + WebRtcConfig.USER_ID + "/" + WebRtcConfig.DEVICE;
-            socketInterface.connect(uri);
+        synchronized (WebSocket.class) {
+            if (socketInterface == null) {
+                socketInterface = new WebSocket();
+                connectionInterface = PeerConnectionManager.getInstance(roomType);
+            }
+            LogUtil.d("webSocketAddress = " + webSocketAddress);
+            if(socketInterface != null) {
+                if (webSocketAddress != null && !webSocketAddress.isEmpty()) {
+                    socketInterface.connect(webSocketAddress);
+                } else {
+                    String uri = WebRtcConfig.SOCKET_URI;//+ "/" + WebRtcConfig.USER_ID + "/" + WebRtcConfig.DEVICE;
+                    socketInterface.connect(uri);
+                }
+            }
         }
     }
 
@@ -152,12 +158,14 @@ public class WebRtcManager implements WebRtcInterface,ConnectionInterface, Socke
 
         SignalingMessage message = new SignalingMessage();
         message.id = "joinRoom";
-        message.name = SELF_NAME;
+        message.name = SELF_NAME + CloudPhoneApplication.getInstance().getShareID();
         message.room = roomId;
         message.url = "webcam";
         message.mode = "video-and-audio";
         message.isLoop = true;
-        socketInterface.joinRoom(message);
+        if(socketInterface != null) {
+            socketInterface.joinRoom(message);
+        }
     }
 
     /**==================================WebRtcInterface===========================*/
@@ -167,17 +175,19 @@ public class WebRtcManager implements WebRtcInterface,ConnectionInterface, Socke
     @Override
     public void connectSuccess(User user) {
 
-        //将服务器返回的数据保存起来，其中最重要的就是userId
-        connectionInterface.connectSuccess(user);
-
-        //根据不同的房间类型启动不同的Activity
-        switch (roomType) {
-            case MEETING:
-                ScreenShareActivity.startSelf(context);
-                break;
-            default:
-                break;
-        }
+//        //将服务器返回的数据保存起来，其中最重要的就是userId
+//        connectionInterface.connectSuccess(user);
+//
+//        //根据不同的房间类型启动不同的Activity
+//        switch (roomType) {
+//            case CAMERA1:
+//            case CAMERA2:
+//            case MEETING:
+//                ScreenShareActivity.startSelf(context);
+//                break;
+//            default:
+//                break;
+//        }
     }
 
     @Override
@@ -261,7 +271,15 @@ public class WebRtcManager implements WebRtcInterface,ConnectionInterface, Socke
     public void socketCallback(Message message) {
         if (viewCallback == null)return;
         viewCallback.socketCallback(message);
-        ScreenShareActivity.startSelf(context);
+        if(message.getMessageType() == MessageType.SOCKET_OPEN){
+            if(roomType == RoomType.SCREEN){
+                ScreenShareActivity.startSelf(context,1);
+            }else if(roomType == RoomType.CAMERA1){
+                ScreenShareActivity.startSelf(context,2);
+            }else if(roomType == RoomType.CAMERA2){
+                ScreenShareActivity.startSelf(context,3);
+            }
+        }
     }
 
     @Override

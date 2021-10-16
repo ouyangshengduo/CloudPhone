@@ -1,5 +1,6 @@
 package com.cloud.phone.websocket;
 
+import com.cloud.phone.CloudPhoneApplication;
 import com.cloud.phone.model.BaseMessage;
 import com.cloud.phone.model.CandidateMessage;
 import com.cloud.phone.model.Event;
@@ -283,8 +284,10 @@ public class WebSocket implements SocketInterface {
     public void joinRoom(SignalingMessage signalingMessage){
         String jsonData = gson.toJson(signalingMessage);
         LogUtil.d("send joinRoom,json: " + jsonData);
-        webSocketClient.send(jsonData);
-        heartbeatStart();
+        if(webSocketClient.isOpen()) {
+            webSocketClient.send(jsonData);
+            heartbeatStart();
+        }
     }
 
     //向房间的其他成员发送自己的SDP信息
@@ -297,7 +300,9 @@ public class WebSocket implements SocketInterface {
         message.sdpOffer = localDescription.description;
         String jsonData = gson.toJson(message);
         LogUtil.d("sendOffer,json: " + jsonData);
-        webSocketClient.send(jsonData);
+        if(webSocketClient.isOpen()) {
+            webSocketClient.send(jsonData);
+        }
     }
 
     //发送应答,告诉对方自己的SDP
@@ -309,7 +314,9 @@ public class WebSocket implements SocketInterface {
         message.sdpOffer = localDescription.description;
         String jsonData = gson.toJson(message);
         LogUtil.d("sendAnswer,json: " + jsonData);
-        webSocketClient.send(jsonData);
+        if(webSocketClient.isOpen()) {
+            webSocketClient.send(jsonData);
+        }
     }
 
     //向房间的其他成员发送自己的iceCandidate信息
@@ -323,14 +330,16 @@ public class WebSocket implements SocketInterface {
 
         CandidateMessage message = new CandidateMessage();
         message.id = "onIceCandidate";
-        message.name = WebRtcManager.SELF_NAME;
+        message.name = WebRtcManager.SELF_NAME + CloudPhoneApplication.getInstance().getShareID();
         message.candidate = candidate;
         String jsonData = gson.toJson(message);
         LogUtil.d("sendIceCandidate,json: " + jsonData);
         if(!webSocketClient.isOpen()){
             LogUtil.w(TAG, "sendIceCandidate websocket is not open!");
         }
-        webSocketClient.send(jsonData);
+        if(webSocketClient.isOpen()) {
+            webSocketClient.send(jsonData);
+        }
     }
     /**============================通过webSocket发送消息========================*/
 
