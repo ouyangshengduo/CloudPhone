@@ -43,7 +43,7 @@ public class WebRtcManager implements WebRtcInterface,ConnectionInterface, Socke
     private String roomId;                            //房间号
     private RoomType roomType;                        //房间类型
     public Intent projectionResultData;
-    public static final String SELF_NAME = "ouyang-with-camera";
+    public static final String SELF_NAME = "cloud-phone-with-";
     private String webSocketAddress;
 
     private WebRtcManager(ViewCallback viewCallback, EglBase eglBase){

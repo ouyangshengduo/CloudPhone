@@ -245,7 +245,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void sendRequest(int roomTypeCode){
         LogUtil.d("send connect request");
         WebRtcInterface webRtcInterface = WebRtcManager.getInstance(this,null);
-        webRtcInterface.chatRequest(RoomType.getRooType(roomTypeCode),"12345678");
+        webRtcInterface.chatRequest(RoomType.getRooType(roomTypeCode),"123456");
     }
 
 

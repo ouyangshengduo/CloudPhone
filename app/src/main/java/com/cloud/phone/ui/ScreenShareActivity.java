@@ -12,6 +12,7 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.cloud.phone.CloudPhoneApplication;
 import com.cloud.phone.model.BaseMessage;
 import com.cloud.phone.model.Message;
 import com.cloud.phone.model.Room;
@@ -52,11 +53,11 @@ public class ScreenShareActivity extends AppCompatActivity implements WebRtcInte
         videoFrameLayout = findViewById(R.id.video_frame_layout);
         shareTypeTv = findViewById(R.id.share_type);
         if(type == SCREEN_SHARE){
-            shareTypeTv.setText("屏幕分享中...");
+            shareTypeTv.setText("屏幕分享中... \n" + WebRtcManager.SELF_NAME + CloudPhoneApplication.getInstance().getShareID());
         }else if(type == CAMERA_FRONT){
-            shareTypeTv.setText("前置摄像头分享中...");
+            shareTypeTv.setText("前置摄像头分享中... \n" + WebRtcManager.SELF_NAME + CloudPhoneApplication.getInstance().getShareID());
         }else if(type == CAMERA_BACK){
-            shareTypeTv.setText("后置摄像头分享中...");
+            shareTypeTv.setText("后置摄像头分享中... \n" + WebRtcManager.SELF_NAME + CloudPhoneApplication.getInstance().getShareID());
         }
         eglBase = EglBase.create();
         manager = WebRtcManager.getInstance(this,eglBase);
