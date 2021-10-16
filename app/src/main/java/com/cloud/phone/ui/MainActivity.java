@@ -20,6 +20,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 
+import com.cloud.phone.CloudPhoneApplication;
 import com.cloud.phone.model.BaseMessage;
 import com.cloud.phone.model.Message;
 import com.cloud.phone.model.Room;
@@ -47,6 +48,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button shareCamera2;
     private int defaultCheck = 1000;
     private int PROJECTION_REQUEST_CODE = 100;
+    private EditText etRoomId;
+    private EditText etUserName;
     private EditText etWidth;
     private EditText etHeight;
     private EditText etFps;
@@ -69,6 +72,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         etWidth = findViewById(R.id.et_width);
         etHeight = findViewById(R.id.et_height);
         etFps = findViewById(R.id.et_fps);
+        etRoomId = findViewById(R.id.et_room_id);
+        etUserName = findViewById(R.id.et_user_name);
         shareScreen.setOnClickListener(this);
         shareCamera1.setOnClickListener(this);
         shareCamera2.setOnClickListener(this);
@@ -77,11 +82,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String widthStr = PreferenceUtil.getInstance().getString("width","");
         String heightStr = PreferenceUtil.getInstance().getString("height","");
         String fpsStr = PreferenceUtil.getInstance().getString("fps","");
+        String roomIdStr = PreferenceUtil.getInstance().getString("roomId","");
+        String userNameStr = PreferenceUtil.getInstance().getString("userName","");
 
         etWebsocketAddress.setText(webSocketAddress);
         etWidth.setText(widthStr);
         etHeight.setText(heightStr);
         etFps.setText(fpsStr);
+        etRoomId.setText(roomIdStr);
+        if(userNameStr.isEmpty()){
+            etUserName.setHint(CloudPhoneApplication.getInstance().getShareID());
+        }
+        etUserName.setText(userNameStr);
 
 
     }
@@ -177,6 +189,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         PreferenceUtil.getInstance().setString("width",etWidth.getText().toString().trim());
         PreferenceUtil.getInstance().setString("height",etHeight.getText().toString().trim());
         PreferenceUtil.getInstance().setString("fps",etFps.getText().toString().trim());
+        PreferenceUtil.getInstance().setString("roomId",etRoomId.getText().toString().trim());
+        PreferenceUtil.getInstance().setString("userName",etUserName.getText().toString().trim());
     }
 
     @Override
@@ -245,7 +259,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void sendRequest(int roomTypeCode){
         LogUtil.d("send connect request");
         WebRtcInterface webRtcInterface = WebRtcManager.getInstance(this,null);
-        webRtcInterface.chatRequest(RoomType.getRooType(roomTypeCode),"123456");
+        webRtcInterface.chatRequest(RoomType.getRooType(roomTypeCode));
     }
 
 

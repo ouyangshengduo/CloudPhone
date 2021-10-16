@@ -14,6 +14,6 @@ public interface WebRtcInterface {
     void switchHandsfree(boolean handsfree); //免提切换
     void powerCamera(boolean enable);        //摄像头开关
     void hangUp();
-    void chatRequest(RoomType roomType, String roomId);//发起聊天请求，建立socket连接
+    void chatRequest(RoomType roomType);//发起聊天请求，建立socket连接
     void joinRoom();                                          //请求加入房间
 }

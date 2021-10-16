@@ -26,6 +26,7 @@ import org.webrtc.MediaStream;
 import org.webrtc.SessionDescription;
 
 import java.util.List;
+import java.util.UUID;
 
 
 /**
@@ -40,10 +41,8 @@ public class WebRtcManager implements WebRtcInterface,ConnectionInterface, Socke
     private ViewCallback viewCallback;                //view层回掉接口
     private Context context;                          //上下文，TODO 内存泄漏警告，但是请注意挂断时释放了context，并不是说单列模式一定会造成内存泄漏，感觉没毛病！！！
     private EglBase eglBase;                          //EglBase可以获取openGL上下文，利用这个上下文可以直接进行渲染
-    private String roomId;                            //房间号
     private RoomType roomType;                        //房间类型
     public Intent projectionResultData;
-    public static final String SELF_NAME = "cloud-phone-with-";
     private String webSocketAddress;
 
     private WebRtcManager(ViewCallback viewCallback, EglBase eglBase){
@@ -146,9 +145,8 @@ public class WebRtcManager implements WebRtcInterface,ConnectionInterface, Socke
 
     //发起聊天请求
     @Override
-    public void chatRequest(RoomType roomType, String roomId) {
+    public void chatRequest(RoomType roomType) {
         this.roomType = roomType;
-        this.roomId = roomId;
         connect();
     }
 
@@ -156,9 +154,18 @@ public class WebRtcManager implements WebRtcInterface,ConnectionInterface, Socke
     @Override
     public void joinRoom() {
 
+        String roomId = PreferenceUtil.getInstance().getString("roomId","");
+        if(roomId.isEmpty()){
+            roomId = "123456";
+        }
+        String name = PreferenceUtil.getInstance().getString("userName","");
+        if(name.isEmpty()){
+            name = CloudPhoneApplication.getInstance().getShareID();
+        }
+
         SignalingMessage message = new SignalingMessage();
         message.id = "joinRoom";
-        message.name = SELF_NAME + CloudPhoneApplication.getInstance().getShareID();
+        message.name = name;
         message.room = roomId;
         message.url = "webcam";
         message.mode = "video-and-audio";
@@ -201,18 +208,18 @@ public class WebRtcManager implements WebRtcInterface,ConnectionInterface, Socke
     }
 
     @Override
-    public void onReceiveOffer(String socketId, String sdp) {
-        connectionInterface.onReceiveOffer(socketId,sdp);
+    public void onReceiveOffer(String userName, String sdp) {
+        connectionInterface.onReceiveOffer(userName,sdp);
     }
 
     @Override
-    public void onReceiveAnswer(String socketId, String sdp) {
-        connectionInterface.onReceiveAnswer(socketId,sdp);
+    public void onReceiveAnswer(String userName, String sdp) {
+        connectionInterface.onReceiveAnswer(userName,sdp);
     }
 
     @Override
-    public void onRemoteCandidate(String socketId, IceCandidate iceCandidate) {
-        connectionInterface.onRemoteCandidate(socketId,iceCandidate);
+    public void onRemoteCandidate(String userName, IceCandidate iceCandidate) {
+        connectionInterface.onRemoteCandidate(userName,iceCandidate);
     }
 
     //创建P2P连接
@@ -236,18 +243,18 @@ public class WebRtcManager implements WebRtcInterface,ConnectionInterface, Socke
     }
 
     @Override
-    public void sendOffer(String socketId, SessionDescription localDescription) {
-        socketInterface.sendOffer(socketId,localDescription);
+    public void sendOffer(String userName, SessionDescription localDescription) {
+        socketInterface.sendOffer(userName,localDescription);
     }
 
     @Override
-    public void sendAnswer(String socketId, SessionDescription localDescription) {
-        socketInterface.sendAnswer(socketId,localDescription);
+    public void sendAnswer(String userName, SessionDescription localDescription) {
+        socketInterface.sendAnswer(userName,localDescription);
     }
 
     @Override
-    public void sendIceCandidate(String socketId, IceCandidate iceCandidate) {
-        socketInterface.sendIceCandidate(socketId,iceCandidate);
+    public void sendIceCandidate(String userName, IceCandidate iceCandidate) {
+        socketInterface.sendIceCandidate(userName,iceCandidate);
     }
 
     @Override
@@ -293,9 +300,9 @@ public class WebRtcManager implements WebRtcInterface,ConnectionInterface, Socke
     }
 
     @Override
-    public void closeWindow(String socketId) {
+    public void closeWindow(String userName) {
         if (viewCallback != null){
-            viewCallback.closeWindow(socketId);
+            viewCallback.closeWindow(userName);
         }
     }
     /**====================================ViewCallback============================*/

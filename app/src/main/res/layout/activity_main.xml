@@ -36,6 +36,48 @@
             android:textStyle="bold"
             android:textColor="@color/black"
             android:gravity="left|center_vertical"
+            android:text="房间号"
+            />
+        <EditText
+            android:id="@+id/et_room_id"
+            android:layout_width="0dp"
+            android:layout_weight="3"
+            android:layout_height="50dp"
+            android:gravity="left|center_vertical"
+            android:hint="123456" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="50dp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:gravity="left|center_vertical"
+            android:text="用户名"
+            />
+        <EditText
+            android:id="@+id/et_user_name"
+            android:layout_width="0dp"
+            android:layout_weight="3"
+            android:layout_height="50dp"
+            android:gravity="left|center_vertical"
+            android:hint="cloud-phone" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="50dp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:gravity="left|center_vertical"
             android:text="Width"
 
             />

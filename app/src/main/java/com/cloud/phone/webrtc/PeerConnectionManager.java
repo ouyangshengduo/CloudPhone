@@ -92,6 +92,7 @@ public class PeerConnectionManager implements ConnectionInterface{
     private static final String AUDIO_TRACK_ID = "ARDAMS-AUDIO";                 //音频轨ID
     private static final String VIDEO_TRACK_ID = "ARDAMS-VIDEO";                 //视频轨ID
     private static final String SURFACE_THREAD_NAME = "surfaceCaptureThread";    //线程名
+    private static String name;
 
     private PeerConnectionManager(RoomType roomType){
         init(roomType);
@@ -105,6 +106,10 @@ public class PeerConnectionManager implements ConnectionInterface{
         peerConnectionMap = new HashMap<>();
         iceServers = new ArrayList<>();
 
+        name = PreferenceUtil.getInstance().getString("userName","");
+        if(name.isEmpty()){
+            name = CloudPhoneApplication.getInstance().getShareID();
+        }
         //创建stun服务器信息-打洞
         PeerConnection.IceServer stun = PeerConnection.IceServer.
                 builder(WebRtcConfig.STUN_URI)
@@ -354,7 +359,7 @@ public class PeerConnectionManager implements ConnectionInterface{
     }
 
     @Override
-    public void chatRequest(RoomType roomType, String roomId) {
+    public void chatRequest(RoomType roomType) {
 
     }
 
@@ -438,7 +443,7 @@ public class PeerConnectionManager implements ConnectionInterface{
     //因为自己需要和每个人都要通信，因此必须和每个人都建立一个P2P连接，
     //通过id循环与房间内的每个人建立P2P连接
     private void createPeerConnections(){
-        currentPeer = new Peer(WebRtcManager.SELF_NAME + CloudPhoneApplication.getInstance().getShareID());
+        currentPeer = new Peer(name);
     }
 
     //将本地流加入peerConnection中
@@ -558,11 +563,9 @@ public class PeerConnectionManager implements ConnectionInterface{
     //P2P连接封装类
     private class Peer implements PeerConnection.Observer, SdpObserver {
         private PeerConnection peerConnection;               //跟远端用户的一个连接
-        private String socketId;                             //远端用户的id
         private DelayQueue<IceCandidate> delayQueue;//延迟队列
 
-        public Peer(String socketId){
-            this.socketId = socketId;
+        public Peer(String userName){
             //创建ice服务器信息配置,即stun和turn，从这里我们可以看出，p2p连接的建立先进行了内网穿透
             PeerConnection.RTCConfiguration configuration = new PeerConnection.RTCConfiguration(iceServers);
             configuration.iceTransportsType = PeerConnection.IceTransportsType.RELAY;
@@ -605,7 +608,7 @@ public class PeerConnectionManager implements ConnectionInterface{
             }
             //否则直接发送
             else {
-                manager.sendIceCandidate(socketId,iceCandidate);
+                manager.sendIceCandidate(name,iceCandidate);
                 //manager.sendIceCandidate(selfId,iceCandidate);
             }
         }
@@ -619,13 +622,13 @@ public class PeerConnectionManager implements ConnectionInterface{
         @Override
         public void onAddStream(MediaStream mediaStream) {
             LogUtil.d("onAddStream");
-            manager.addRemoteStream(mediaStream,socketId);
+            manager.addRemoteStream(mediaStream,name);
         }
 
         @Override
         public void onRemoveStream(MediaStream mediaStream) {
             LogUtil.d("onRemoveStream");
-            manager.closeWindow(socketId);
+            manager.closeWindow(name);
         }
 
         @Override
@@ -682,12 +685,12 @@ public class PeerConnectionManager implements ConnectionInterface{
             }else if (peerConnection.signalingState() == PeerConnection.SignalingState.HAVE_LOCAL_OFFER){
                 //接收者，这个方法在实测时一直没有被触发，不知道为什么，注释后也能正常运行
                 if (role == Role.receiver){
-                    manager.sendAnswer(socketId,peerConnection.getLocalDescription());
+                    manager.sendAnswer(name,peerConnection.getLocalDescription());
                     //manager.sendAnswer(selfId,peerConnection.getLocalDescription());
                 }
                 //发送者
                 else if (role == Role.caller){
-                    manager.sendOffer(socketId,peerConnection.getLocalDescription());
+                    manager.sendOffer(name,peerConnection.getLocalDescription());
                     //manager.sendOffer(selfId,peerConnection.getLocalDescription());
                 }
             }
@@ -695,7 +698,7 @@ public class PeerConnectionManager implements ConnectionInterface{
                 //这一句非常重要，在有人加入房间后，收到offer -> setRemoteDescription -> onCreateSuccess -> setLocalDescription,然后被调用
                 //实测在注释掉之后通信无法建立
                 if (role == Role.receiver){
-                    manager.sendAnswer(socketId,peerConnection.getLocalDescription());
+                    manager.sendAnswer(name,peerConnection.getLocalDescription());
                     //manager.sendAnswer(selfId,peerConnection.getLocalDescription());
                 }
             }
@@ -705,7 +708,7 @@ public class PeerConnectionManager implements ConnectionInterface{
                     || (role == Role.receiver && peerConnection.getLocalDescription() != null)){
                 //TODO 应当注意的是在没有使用延迟队列的时候媒体协商和网络协商是异步的，
                 //TODO 在使用了延迟队列后媒体协商交换完成再进行网络协商，但是这么设计并不是唯一的
-                sendCandidateFromQueue(socketId);
+                sendCandidateFromQueue(name);
                 //sendCandidateFromQueue(selfId);
             }
         }

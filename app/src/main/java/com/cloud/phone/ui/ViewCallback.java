@@ -12,7 +12,7 @@ import org.webrtc.MediaStream;
  */
 public interface ViewCallback {
     void socketCallback(Message message);                      //socket状态回调
-    void setLocalStream(MediaStream localStream,String selfId); //添加本地流进行预览
-    void addRemoteStream(MediaStream remoteStream,String socketId);//添加远端的流进行显示
-    void closeWindow(String socketId);                          //关闭窗口
+    void setLocalStream(MediaStream localStream,String userName); //添加本地流进行预览
+    void addRemoteStream(MediaStream remoteStream,String userName);//添加远端的流进行显示
+    void closeWindow(String userName);                          //关闭窗口
 }

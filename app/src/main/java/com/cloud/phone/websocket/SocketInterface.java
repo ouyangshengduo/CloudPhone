@@ -12,9 +12,9 @@ import org.webrtc.SessionDescription;
  */
 public interface SocketInterface {
     void connect(String uri);//发起加入房间请求,成功后服务器返回应答onMessage被调用，带有房间里的人的id和自己的id
-    void sendOffer(String socketId, SessionDescription localDescription); //向房间的其他成员发送自己的SDP信息
-    void sendAnswer(String socketId, SessionDescription localDescription);//发送应答
-    void sendIceCandidate(String socketId, IceCandidate iceCandidate);    //向房间的其他成员发送自己的iceCandidate信息
+    void sendOffer(String userName, SessionDescription localDescription); //向房间的其他成员发送自己的SDP信息
+    void sendAnswer(String userName, SessionDescription localDescription);//发送应答
+    void sendIceCandidate(String userName, IceCandidate iceCandidate);    //向房间的其他成员发送自己的iceCandidate信息
     void close();                                                         //关闭socket
     void joinRoom(SignalingMessage message);                            //请求加入房间
 }

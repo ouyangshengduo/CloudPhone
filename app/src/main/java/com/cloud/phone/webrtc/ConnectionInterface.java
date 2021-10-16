@@ -16,9 +16,9 @@ public interface ConnectionInterface extends WebRtcInterface{
     void connectSuccess(User user);                                       //webSocket连接成功
     void remoteJoinToRoom(SignalingMessage user);                                     //有人加入房间
     void remoteOutRoom(SignalingMessage user);                                        //有人退出房间
-    void onReceiveOffer(String socketId, String sdp);                     //远端发起offer
-    void onReceiveAnswer(String socketId, String sdp);                    //远端响应了offer
-    void onRemoteCandidate(String socketId, IceCandidate iceCandidate);   //远端响应了Candidate
+    void onReceiveOffer(String userName, String sdp);                     //远端发起offer
+    void onReceiveAnswer(String userName, String sdp);                    //远端响应了offer
+    void onRemoteCandidate(String userName, IceCandidate iceCandidate);   //远端响应了Candidate
 
     void createConnection(List<SignalingMessage> members);                        //创建P2P连接
     int getConnectNum();                                                  //获取链接数

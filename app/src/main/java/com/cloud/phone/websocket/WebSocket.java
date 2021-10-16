@@ -321,7 +321,7 @@ public class WebSocket implements SocketInterface {
 
     //向房间的其他成员发送自己的iceCandidate信息
     @Override
-    public void sendIceCandidate(String socketId, IceCandidate iceCandidate) {
+    public void sendIceCandidate(String userName, IceCandidate iceCandidate) {
 
         WebCandidate candidate = new WebCandidate();
         candidate.sdpMid = iceCandidate.sdpMid;
@@ -330,7 +330,7 @@ public class WebSocket implements SocketInterface {
 
         CandidateMessage message = new CandidateMessage();
         message.id = "onIceCandidate";
-        message.name = WebRtcManager.SELF_NAME + CloudPhoneApplication.getInstance().getShareID();
+        message.name = userName;
         message.candidate = candidate;
         String jsonData = gson.toJson(message);
         LogUtil.d("sendIceCandidate,json: " + jsonData);

@@ -19,6 +19,7 @@ import com.cloud.phone.model.Room;
 import com.cloud.phone.model.RoomType;
 import com.cloud.phone.util.LogUtil;
 import com.cloud.phone.util.PositionUtil;
+import com.cloud.phone.util.PreferenceUtil;
 import com.cloud.phone.webrtc.WebRtcInterface;
 import com.cloud.phone.webrtc.WebRtcManager;
 
@@ -52,12 +53,16 @@ public class ScreenShareActivity extends AppCompatActivity implements WebRtcInte
 
         videoFrameLayout = findViewById(R.id.video_frame_layout);
         shareTypeTv = findViewById(R.id.share_type);
+        String name = PreferenceUtil.getInstance().getString("userName","");
+        if(name.isEmpty()){
+            name = CloudPhoneApplication.getInstance().getShareID();
+        }
         if(type == SCREEN_SHARE){
-            shareTypeTv.setText("屏幕分享中... \n" + WebRtcManager.SELF_NAME + CloudPhoneApplication.getInstance().getShareID());
+            shareTypeTv.setText("屏幕分享中... \n" + name);
         }else if(type == CAMERA_FRONT){
-            shareTypeTv.setText("前置摄像头分享中... \n" + WebRtcManager.SELF_NAME + CloudPhoneApplication.getInstance().getShareID());
+            shareTypeTv.setText("前置摄像头分享中... \n" + name);
         }else if(type == CAMERA_BACK){
-            shareTypeTv.setText("后置摄像头分享中... \n" + WebRtcManager.SELF_NAME + CloudPhoneApplication.getInstance().getShareID());
+            shareTypeTv.setText("后置摄像头分享中... \n" + name);
         }
         eglBase = EglBase.create();
         manager = WebRtcManager.getInstance(this,eglBase);
@@ -95,7 +100,7 @@ public class ScreenShareActivity extends AppCompatActivity implements WebRtcInte
     }
 
     @Override
-    public void chatRequest(RoomType roomType, String roomId) {
+    public void chatRequest(RoomType roomType) {
 
     }
 
