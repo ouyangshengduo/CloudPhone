@@ -1,6 +1,6 @@
 # CloudPhone
 
-# Webrtc屏幕分享以及摄像头直播推流（Android）
+# Android屏幕分享以及摄像头直播推流实践（Webrtc）
 
 ### 1.实现的功能点
 
@@ -22,6 +22,6 @@
 ```
 
 ### 3.demo地址
-
+https://www.jianshu.com/p/c1eeb109ffdd
 
 
